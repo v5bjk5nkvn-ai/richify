@@ -1,0 +1,236 @@
+-- Richify Master Piece Crosshair Script
+-- Credits: Richify | My Discord @r_0x.
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Disable Rayfield notifications
+if Rayfield.Notify then
+    Rayfield.Notify = function() end
+end
+
+local Window = Rayfield:CreateWindow({
+    Name = "Richify Goated Crossair",
+    LoadingTitle = "The Goat Richify",
+    LoadingSubtitle = "by Richify | My Discord @r_0x.",
+    ShowText = "Richify Goat",
+    Theme = "Serenity",
+    ToggleUIKeybind = "Q",
+    ConfigurationSaving = {Enabled = true, FolderName = nil, FileName = "richify_masterpiece"},
+    KeySystem = false
+})
+
+local ClientTab = Window:CreateTab("Client", nil)
+ClientTab:CreateSection("Crosshair Settings")
+
+-- Defaults
+local CrosshairStyle = "Default"
+local CrosshairColor = Color3.fromRGB(255,255,255)
+local CrosshairSize = 12
+local CrosshairThickness = 2
+local CrosshairOpacity = 1
+local RainbowMode = false
+
+local RainbowHue = 0
+local CrosshairGUI
+local CrosshairFrames = {}
+local Running = true
+
+-- Init GUI
+local function InitCrosshairGUI()
+    if CrosshairGUI then return end
+    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    CrosshairGUI = Instance.new("ScreenGui")
+    CrosshairGUI.Name = "CustomCrosshair"
+    CrosshairGUI.ResetOnSpawn = false
+    CrosshairGUI.IgnoreGuiInset = true
+    CrosshairGUI.Parent = pg
+end
+
+-- Build Crosshair
+local function BuildCrosshair()
+    for _, f in pairs(CrosshairFrames) do f:Destroy() end
+    CrosshairFrames = {}
+
+    if CrosshairStyle == "None" then return end
+
+    local function CreateFrame(sizeX, sizeY, posX, posY, rot)
+        local frame = Instance.new("Frame")
+        frame.AnchorPoint = Vector2.new(0.5,0.5)
+        frame.Position = UDim2.new(0.5, posX or 0, 0.5, posY or 0)
+        frame.Size = UDim2.new(0, sizeX, 0, sizeY)
+        frame.Rotation = rot or 0
+        frame.BackgroundColor3 = CrosshairColor
+        frame.BackgroundTransparency = 1 - CrosshairOpacity
+        frame.BorderSizePixel = 0
+        frame.Parent = CrosshairGUI
+        table.insert(CrosshairFrames, frame)
+    end
+
+    if CrosshairStyle == "Dot" then
+        CreateFrame(CrosshairThickness*2, CrosshairThickness*2)
+    elseif CrosshairStyle == "Plus" then
+        CreateFrame(CrosshairThickness, CrosshairSize)
+        CreateFrame(CrosshairSize, CrosshairThickness)
+    elseif CrosshairStyle == "T-Cross" then
+        CreateFrame(CrosshairThickness, CrosshairSize)
+        CreateFrame(CrosshairSize, CrosshairThickness, 0, -CrosshairSize/2)
+    elseif CrosshairStyle == "X" then
+        CreateFrame(CrosshairThickness, CrosshairSize, 0, 0, 45)
+        CreateFrame(CrosshairThickness, CrosshairSize, 0, 0, -45)
+    elseif CrosshairStyle == "Circle" then
+        local c = Instance.new("Frame")
+        c.AnchorPoint = Vector2.new(0.5,0.5)
+        c.Position = UDim2.new(0.5,0,0.5,0)
+        c.Size = UDim2.new(0,CrosshairSize,0,CrosshairSize)
+        c.BackgroundColor3 = CrosshairColor
+        c.BackgroundTransparency = 1 - CrosshairOpacity
+        c.BorderSizePixel = 0
+        c.Parent = CrosshairGUI
+        Instance.new("UICorner", c).CornerRadius = UDim.new(1,0)
+        table.insert(CrosshairFrames, c)
+    else
+        CreateFrame(CrosshairThickness, CrosshairSize)
+        CreateFrame(CrosshairSize, CrosshairThickness)
+    end
+end
+
+-- Update
+task.spawn(function()
+    while Running do
+        if CrosshairGUI then
+            local color = CrosshairColor
+            if RainbowMode then
+                RainbowHue = (RainbowHue + 0.005) % 1
+                color = Color3.fromHSV(RainbowHue,1,1)
+            end
+            for _, frame in pairs(CrosshairFrames) do
+                frame.BackgroundColor3 = color
+                frame.BackgroundTransparency = 1 - CrosshairOpacity
+            end
+        end
+        task.wait(0.03)
+    end
+end)
+
+InitCrosshairGUI()
+BuildCrosshair()
+
+-- Size Slider
+ClientTab:CreateSlider({
+    Name = "Crosshair Size (px)",
+    Range = {2, 50},
+    Increment = 1,
+    Suffix = "px",
+    CurrentValue = CrosshairSize,
+    Flag = "CrosshairSize",
+    Callback = function(value)
+        CrosshairSize = value
+        BuildCrosshair()
+    end
+})
+
+-- Opacity Slider
+ClientTab:CreateSlider({
+    Name = "Crosshair Opacity",
+    Range = {0, 1},
+    Increment = 0.05,
+    Suffix = "",
+    CurrentValue = CrosshairOpacity,
+    Flag = "CrosshairOpacity",
+    Callback = function(value)
+        CrosshairOpacity = value
+        BuildCrosshair()
+    end
+})
+
+-- Style Buttons
+local function CrosshairButton(name, style)
+    ClientTab:CreateButton({
+        Name = name,
+        Callback = function()
+            CrosshairStyle = style
+            BuildCrosshair()
+        end
+    })
+end
+
+CrosshairButton("Default", "Default")
+CrosshairButton("Dot", "Dot")
+CrosshairButton("Plus", "Plus")
+CrosshairButton("T-Cross", "T-Cross")
+CrosshairButton("X Crosshair", "X")
+CrosshairButton("Circle", "Circle")
+CrosshairButton("Remove", "None")
+
+ClientTab:CreateDivider()
+ClientTab:CreateSection("Presets")
+
+-- Presets (NO EMOJIS)
+ClientTab:CreateButton({
+    Name = "Competitive",
+    Callback = function()
+        CrosshairStyle = "Plus"
+        CrosshairSize = 10
+        CrosshairThickness = 2
+        CrosshairColor = Color3.fromRGB(0,255,0)
+        RainbowMode = false
+        BuildCrosshair()
+    end
+})
+
+ClientTab:CreateButton({
+    Name = "Dot Only",
+    Callback = function()
+        CrosshairStyle = "Dot"
+        CrosshairSize = 6
+        CrosshairThickness = 3
+        CrosshairColor = Color3.fromRGB(255,255,255)
+        RainbowMode = false
+        BuildCrosshair()
+    end
+})
+
+ClientTab:CreateButton({
+    Name = "Thick X",
+    Callback = function()
+        CrosshairStyle = "X"
+        CrosshairSize = 16
+        CrosshairThickness = 4
+        CrosshairColor = Color3.fromRGB(255,0,0)
+        RainbowMode = false
+        BuildCrosshair()
+    end
+})
+
+ClientTab:CreateButton({
+    Name = "Rainbow Fun",
+    Callback = function()
+        CrosshairStyle = "Default"
+        CrosshairSize = 14
+        CrosshairThickness = 3
+        RainbowMode = true
+        BuildCrosshair()
+    end
+})
+
+ClientTab:CreateDivider()
+
+-- 🔴 UNINJECT BUTTON
+ClientTab:CreateButton({
+    Name = "Uninject",
+    Callback = function()
+        Running = false
+        if CrosshairGUI then
+            CrosshairGUI:Destroy()
+            CrosshairGUI = nil
+        end
+        Rayfield:Destroy()
+    end
+})
+
+-- Respawn support
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    InitCrosshairGUI()
+    BuildCrosshair()
+end)
